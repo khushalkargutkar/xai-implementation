@@ -1,0 +1,729 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>XAI Loan Eligibility System</title>
+    <style>
+        /* Muted business color palette */
+        :root {
+            --primary-color: #5a6c7d;
+            --secondary-color: #7d8e9f;
+            --accent-color: #9eb3c2;
+            --background-color: #f5f7fa;
+            --card-background: #ffffff;
+            --text-primary: #2c3e50;
+            --text-secondary: #5a6c7d;
+            --border-color: #d6dce5;
+            --success-color: #52a085;
+            --warning-color: #c67e3b;
+            --error-color: #c55a5a;
+            --shadow: 0 2px 10px rgba(90, 108, 125, 0.1);
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            line-height: 1.6;
+            color: var(--text-primary);
+            background-color: var(--background-color);
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 40px;
+            padding: 30px 0;
+            background-color: var(--card-background);
+            border-radius: 8px;
+            box-shadow: var(--shadow);
+        }
+
+        .header h1 {
+            color: var(--primary-color);
+            font-size: 2.2em;
+            margin-bottom: 10px;
+            font-weight: 600;
+        }
+
+        .header p {
+            color: var(--text-secondary);
+            font-size: 1.1em;
+        }
+
+        .main-content {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 30px;
+            margin-bottom: 30px;
+        }
+
+        .card {
+            background-color: var(--card-background);
+            border-radius: 8px;
+            padding: 25px;
+            box-shadow: var(--shadow);
+            border: 1px solid var(--border-color);
+        }
+
+        .card h2 {
+            color: var(--primary-color);
+            margin-bottom: 20px;
+            font-size: 1.5em;
+            font-weight: 600;
+        }
+
+        .form-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+            margin-bottom: 20px;
+        }
+
+        .form-group {
+            margin-bottom: 15px;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 5px;
+            color: var(--text-primary);
+            font-weight: 500;
+        }
+
+        .form-group input,
+        .form-group select {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid var(--border-color);
+            border-radius: 4px;
+            font-size: 14px;
+            background-color: white;
+            color: var(--text-primary);
+        }
+
+        .form-group input:focus,
+        .form-group select:focus {
+            outline: none;
+            border-color: var(--accent-color);
+            box-shadow: 0 0 0 2px rgba(158, 179, 194, 0.2);
+        }
+
+        .threshold-control {
+            grid-column: 1 / -1;
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            padding: 15px;
+            background-color: var(--background-color);
+            border-radius: 4px;
+        }
+
+        .threshold-control input[type="range"] {
+            flex: 1;
+            height: 6px;
+            background: var(--border-color);
+            border-radius: 3px;
+            outline: none;
+        }
+
+        .threshold-control input[type="range"]::-webkit-slider-thumb {
+            appearance: none;
+            width: 18px;
+            height: 18px;
+            border-radius: 50%;
+            background: var(--primary-color);
+            cursor: pointer;
+        }
+
+        .threshold-value {
+            font-weight: bold;
+            color: var(--primary-color);
+        }
+
+        .btn {
+            background-color: var(--primary-color);
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 16px;
+            font-weight: 500;
+            transition: background-color 0.3s;
+        }
+
+        .btn:hover {
+            background-color: var(--secondary-color);
+        }
+
+        .btn:disabled {
+            background-color: var(--border-color);
+            cursor: not-allowed;
+        }
+
+        .results-section {
+            grid-column: 1 / -1;
+            display: none;
+        }
+
+        .results-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+
+        .decision-card {
+            padding: 20px;
+            border-radius: 8px;
+            text-align: center;
+            margin-bottom: 20px;
+            font-size: 1.2em;
+            font-weight: bold;
+        }
+
+        .decision-eligible {
+            background-color: #e8f5e8;
+            color: var(--success-color);
+            border: 2px solid var(--success-color);
+        }
+
+        .decision-not-eligible {
+            background-color: #fdf2f2;
+            color: var(--error-color);
+            border: 2px solid var(--error-color);
+        }
+
+        .probability-info {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 15px;
+            background-color: var(--background-color);
+            border-radius: 4px;
+            margin-bottom: 20px;
+        }
+
+        .probability-bar {
+            width: 200px;
+            height: 10px;
+            background-color: var(--border-color);
+            border-radius: 5px;
+            overflow: hidden;
+        }
+
+        .probability-fill {
+            height: 100%;
+            background-color: var(--accent-color);
+            transition: width 0.3s;
+        }
+
+        .lime-chart {
+            margin: 20px 0;
+        }
+
+        .lime-chart h3 {
+            color: var(--primary-color);
+            margin-bottom: 15px;
+        }
+
+        .feature-bar {
+            display: flex;
+            align-items: center;
+            margin-bottom: 10px;
+            font-size: 14px;
+        }
+
+        .feature-name {
+            width: 200px;
+            text-align: right;
+            padding-right: 10px;
+            font-weight: 500;
+        }
+
+        .bar-container {
+            flex: 1;
+            height: 20px;
+            background-color: var(--background-color);
+            border-radius: 10px;
+            overflow: hidden;
+            position: relative;
+        }
+
+        .bar-positive {
+            height: 100%;
+            background-color: var(--success-color);
+            opacity: 0.8;
+        }
+
+        .bar-negative {
+            height: 100%;
+            background-color: var(--error-color);
+            opacity: 0.8;
+        }
+
+        .feature-weight {
+            width: 60px;
+            text-align: left;
+            padding-left: 10px;
+            font-weight: bold;
+        }
+
+        .rationale-section {
+            margin-top: 20px;
+            padding: 20px;
+            background-color: var(--background-color);
+            border-radius: 4px;
+            border-left: 4px solid var(--accent-color);
+        }
+
+        .rationale-section h3 {
+            color: var(--primary-color);
+            margin-bottom: 10px;
+        }
+
+        .loading {
+            display: none;
+            text-align: center;
+            color: var(--text-secondary);
+        }
+
+        .spinner {
+            border: 3px solid var(--border-color);
+            border-top: 3px solid var(--primary-color);
+            border-radius: 50%;
+            width: 30px;
+            height: 30px;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 10px;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        @media (max-width: 768px) {
+            .main-content {
+                grid-template-columns: 1fr;
+            }
+            
+            .form-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .feature-name {
+                width: 150px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>Explainable AI Loan Eligibility System</h1>
+            <p>Advanced machine learning with transparent decision-making</p>
+        </div>
+
+        <div class="main-content">
+            <!-- Input Form -->
+            <div class="card">
+                <h2>Loan Application</h2>
+                <form id="loanForm">
+                    <div class="form-grid">
+                        <div class="form-group">
+                            <label for="age">Age</label>
+                            <input type="number" id="age" name="age" min="18" max="80" value="29" required>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="income">Annual Income ($)</label>
+                            <input type="number" id="income" name="income" min="0" step="1000" value="40000" required>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="loan_amount">Loan Amount ($)</label>
+                            <input type="number" id="loan_amount" name="loan_amount" min="0" step="1000" value="25000" required>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="debt_to_income">Debt-to-Income Ratio</label>
+                            <input type="number" id="debt_to_income" name="debt_to_income" min="0" max="1" step="0.01" value="0.6" required>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="employment_years">Employment Years</label>
+                            <input type="number" id="employment_years" name="employment_years" min="0" step="0.5" value="2" required>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="credit_history_years">Credit History Years</label>
+                            <input type="number" id="credit_history_years" name="credit_history_years" min="0" step="0.5" value="3" required>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="num_delinquencies">Number of Delinquencies</label>
+                            <input type="number" id="num_delinquencies" name="num_delinquencies" min="0" value="1" required>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="num_existing_loans">Existing Loans</label>
+                            <input type="number" id="num_existing_loans" name="num_existing_loans" min="0" value="2" required>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="purpose_of_loan">Loan Purpose</label>
+                            <select id="purpose_of_loan" name="purpose_of_loan" required>
+                                <option value="education">Education</option>
+                                <option value="auto">Auto</option>
+                                <option value="business" selected>Business</option>
+                                <option value="home">Home</option>
+                            </select>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="collateral">Collateral</label>
+                            <select id="collateral" name="collateral" required>
+                                <option value="none" selected>None</option>
+                                <option value="vehicle">Vehicle</option>
+                                <option value="property">Property</option>
+                                <option value="savings">Savings</option>
+                            </select>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="residence_status">Residence Status</label>
+                            <select id="residence_status" name="residence_status" required>
+                                <option value="rent" selected>Rent</option>
+                                <option value="own">Own</option>
+                                <option value="mortgage">Mortgage</option>
+                                <option value="other">Other</option>
+                            </select>
+                        </div>
+                        
+                        <div class="threshold-control">
+                            <label>Decision Threshold:</label>
+                            <input type="range" id="threshold" min="0" max="1" step="0.01" value="0.5">
+                            <span class="threshold-value">0.50</span>
+                        </div>
+                    </div>
+                    
+                    <button type="submit" class="btn" id="predictBtn">Analyze Application</button>
+                </form>
+                
+                <div class="loading" id="loading">
+                    <div class="spinner"></div>
+                    <p>Processing application...</p>
+                </div>
+            </div>
+
+            <!-- Results Display -->
+            <div class="card">
+                <div class="results-header">
+                    <h2>Analysis Results</h2>
+                    <button class="btn" id="historyBtn" style="font-size: 14px; padding: 8px 16px;">View History</button>
+                </div>
+                
+                <div id="resultsContent">
+                    <p style="color: var(--text-secondary); text-align: center; padding: 40px;">
+                        Submit an application to see the AI analysis results
+                    </p>
+                </div>
+            </div>
+
+            <!-- Results Section (appears after prediction) -->
+            <div class="card results-section" id="resultsSection">
+                <div id="decisionCard" class="decision-card">
+                    <!-- Decision will be populated here -->
+                </div>
+                
+                <div class="probability-info">
+                    <span><strong>Probability:</strong> <span id="probabilityValue">-</span></span>
+                    <div class="probability-bar">
+                        <div class="probability-fill" id="probabilityFill"></div>
+                    </div>
+                    <span><strong>Threshold:</strong> <span id="thresholdUsed">-</span></span>
+                </div>
+                
+                <div class="lime-chart">
+                    <h3>Feature Importance (LIME Analysis)</h3>
+                    <div id="limeChart">
+                        <!-- LIME bars will be populated here -->
+                    </div>
+                </div>
+                
+                <div class="rationale-section">
+                    <h3>AI Explanation</h3>
+                    <p id="rationaleText">-</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Global variables
+        let currentThreshold = 0.5;
+
+        // Initialize event listeners
+        document.addEventListener('DOMContentLoaded', function() {
+            const thresholdSlider = document.getElementById('threshold');
+            const thresholdValue = document.querySelector('.threshold-value');
+            const loanForm = document.getElementById('loanForm');
+            const historyBtn = document.getElementById('historyBtn');
+
+            // Threshold slider handler
+            thresholdSlider.addEventListener('input', function() {
+                currentThreshold = parseFloat(this.value);
+                thresholdValue.textContent = currentThreshold.toFixed(2);
+            });
+
+            // Form submission handler
+            loanForm.addEventListener('submit', handleFormSubmission);
+            
+            // History button handler
+            historyBtn.addEventListener('click', showHistory);
+        });
+
+        async function handleFormSubmission(e) {
+            e.preventDefault();
+            
+            const formData = new FormData(e.target);
+            const applicationData = {
+                age: parseFloat(formData.get('age')),
+                income: parseFloat(formData.get('income')),
+                loan_amount: parseFloat(formData.get('loan_amount')),
+                debt_to_income: parseFloat(formData.get('debt_to_income')),
+                employment_years: parseFloat(formData.get('employment_years')),
+                credit_history_years: parseFloat(formData.get('credit_history_years')),
+                num_delinquencies: parseInt(formData.get('num_delinquencies')),
+                num_existing_loans: parseInt(formData.get('num_existing_loans')),
+                purpose_of_loan: formData.get('purpose_of_loan'),
+                collateral: formData.get('collateral'),
+                residence_status: formData.get('residence_status')
+            };
+
+            // Show loading state
+            showLoading(true);
+            
+            try {
+                const response = await fetch(`/predict?threshold=${currentThreshold}`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify(applicationData)
+                });
+
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+
+                const result = await response.json();
+                displayResults(result);
+                
+            } catch (error) {
+                console.error('Error:', error);
+                displayError('Failed to process application. Please try again.');
+            } finally {
+                showLoading(false);
+            }
+        }
+
+        function showLoading(show) {
+            const loading = document.getElementById('loading');
+            const predictBtn = document.getElementById('predictBtn');
+            
+            if (show) {
+                loading.style.display = 'block';
+                predictBtn.disabled = true;
+                predictBtn.textContent = 'Processing...';
+            } else {
+                loading.style.display = 'none';
+                predictBtn.disabled = false;
+                predictBtn.textContent = 'Analyze Application';
+            }
+        }
+
+        function displayResults(result) {
+            // Update decision card
+            const decisionCard = document.getElementById('decisionCard');
+            decisionCard.textContent = result.decision;
+            decisionCard.className = `decision-card ${result.decision === 'Eligible' ? 'decision-eligible' : 'decision-not-eligible'}`;
+
+            // Update probability
+            document.getElementById('probabilityValue').textContent = (result.probability * 100).toFixed(1) + '%';
+            document.getElementById('thresholdUsed').textContent = (result.threshold * 100).toFixed(0) + '%';
+            
+            // Update probability bar
+            const probabilityFill = document.getElementById('probabilityFill');
+            probabilityFill.style.width = (result.probability * 100) + '%';
+            
+            if (result.probability >= result.threshold) {
+                probabilityFill.style.backgroundColor = 'var(--success-color)';
+            } else {
+                probabilityFill.style.backgroundColor = 'var(--error-color)';
+            }
+
+            // Update LIME chart
+            displayLimeChart(result.lime_weights);
+
+            // Update rationale
+            document.getElementById('rationaleText').textContent = result.rationale.rationale || 'Analysis completed successfully.';
+
+            // Show results section
+            document.getElementById('resultsSection').style.display = 'block';
+            
+            // Scroll to results
+            document.getElementById('resultsSection').scrollIntoView({ behavior: 'smooth' });
+        }
+
+        function displayLimeChart(limeWeights) {
+            const limeChart = document.getElementById('limeChart');
+            limeChart.innerHTML = '';
+
+            // Sort features by absolute weight (most important first)
+            const sortedFeatures = Object.entries(limeWeights)
+                .sort((a, b) => Math.abs(b[1]) - Math.abs(a[1]))
+                .slice(0, 8); // Show top 8 features
+
+            sortedFeatures.forEach(([feature, weight]) => {
+                const featureBar = document.createElement('div');
+                featureBar.className = 'feature-bar';
+
+                const featureName = document.createElement('div');
+                featureName.className = 'feature-name';
+                featureName.textContent = formatFeatureName(feature);
+
+                const barContainer = document.createElement('div');
+                barContainer.className = 'bar-container';
+
+                const bar = document.createElement('div');
+                const maxWeight = Math.max(...Object.values(limeWeights).map(Math.abs));
+                const barWidth = Math.abs(weight) / maxWeight * 100;
+                
+                bar.style.width = barWidth + '%';
+                bar.className = weight >= 0 ? 'bar-positive' : 'bar-negative';
+
+                const featureWeight = document.createElement('div');
+                featureWeight.className = 'feature-weight';
+                featureWeight.textContent = weight.toFixed(3);
+
+                barContainer.appendChild(bar);
+                featureBar.appendChild(featureName);
+                featureBar.appendChild(barContainer);
+                featureBar.appendChild(featureWeight);
+                limeChart.appendChild(featureBar);
+            });
+        }
+
+        function formatFeatureName(feature) {
+            // Convert feature names to readable format
+            return feature
+                .replace(/_/g, ' ')
+                .replace(/\b\w/g, l => l.toUpperCase())
+                .replace(/([A-Z])/g, ' $1')
+                .trim();
+        }
+
+        function displayError(message) {
+            const resultsContent = document.getElementById('resultsContent');
+            resultsContent.innerHTML = `
+                <div style="color: var(--error-color); text-align: center; padding: 20px;">
+                    <p><strong>Error:</strong> ${message}</p>
+                </div>
+            `;
+        }
+
+        async function showHistory() {
+            try {
+                const response = await fetch('/history');
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+
+                const data = await response.json();
+                displayHistory(data.history);
+                
+            } catch (error) {
+                console.error('Error fetching history:', error);
+                alert('Failed to load history. Please try again.');
+            }
+        }
+
+        function displayHistory(history) {
+            if (history.length === 0) {
+                alert('No prediction history available.');
+                return;
+            }
+
+            // Create a simple modal-like display
+            let historyHtml = `
+                <div style="position: fixed; top: 0; left: 0; width: 100%; height: 100%; 
+                           background-color: rgba(0,0,0,0.5); z-index: 1000; display: flex; 
+                           align-items: center; justify-content: center;" id="historyModal">
+                    <div style="background-color: white; border-radius: 8px; padding: 30px; 
+                               max-width: 80%; max-height: 80%; overflow-y: auto; position: relative;">
+                        <h2 style="margin-bottom: 20px; color: var(--primary-color);">Prediction History</h2>
+                        <button onclick="closeHistory()" style="position: absolute; top: 15px; right: 15px; 
+                                background: none; border: none; font-size: 24px; cursor: pointer;">&times;</button>
+                        <div style="max-height: 400px; overflow-y: auto;">
+            `;
+
+            history.slice(0, 10).forEach(record => {
+                const timestamp = new Date(record.timestamp).toLocaleString();
+                historyHtml += `
+                    <div style="border: 1px solid var(--border-color); border-radius: 4px; 
+                               padding: 15px; margin-bottom: 15px; background-color: var(--background-color);">
+                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
+                            <strong style="color: ${record.decision === 'Eligible' ? 'var(--success-color)' : 'var(--error-color)'}">
+                                ${record.decision}
+                            </strong>
+                            <span style="color: var(--text-secondary); font-size: 14px;">${timestamp}</span>
+                        </div>
+                        <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; font-size: 14px;">
+                            <div>Income: ${record.income?.toLocaleString()}</div>
+                            <div>Loan: ${record.loan_amount?.toLocaleString()}</div>
+                            <div>Probability: ${(record.probability * 100).toFixed(1)}%</div>
+                        </div>
+                    </div>
+                `;
+            });
+
+            historyHtml += `
+                        </div>
+                    </div>
+                </div>
+            `;
+
+            // Add to page
+            document.body.insertAdjacentHTML('beforeend', historyHtml);
+        }
+
+        function closeHistory() {
+            const modal = document.getElementById('historyModal');
+            if (modal) {
+                modal.remove();
+            }
+        }
+
+        // Close modal when clicking outside
+        document.addEventListener('click', function(e) {
+            const modal = document.getElementById('historyModal');
+            if (modal && e.target === modal) {
+                closeHistory();
+            }
+        });
+    </script>
+</body>
+</html>
